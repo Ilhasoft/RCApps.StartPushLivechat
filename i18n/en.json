@@ -1,0 +1,5 @@
+{
+    "config_flow_id": "Flow Id",
+    "config_rapidpro_url": "Push URL",
+    "config_rapidpro_auth_token": "Push Auth Token"
+}
