@@ -18,6 +18,6 @@ export default class AppRepositoryImpl implements IAppRepository {
             throw new AppError(`Could not find agent:  ${agentUsername}`, HttpStatusCode.BAD_REQUEST);
         }
 
-        return await this.remoteDataSource.startFlow(agentUsername, visitorToken, flowId);
+        return await this.remoteDataSource.startFlow(agent.id, visitorToken, flowId);
     }
 }
