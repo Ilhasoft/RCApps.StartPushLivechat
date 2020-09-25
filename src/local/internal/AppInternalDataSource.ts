@@ -8,8 +8,8 @@ export default class AppInternalDataSource implements IAppInternalDataSource {
 
     constructor(private readonly reader: IRead) {}
 
-    public async getAgentById(agentId: string): Promise<IUser | undefined> {
-        return this.reader.getUserReader().getById(agentId);
+    public async getAgentByUsername(agentUsername: string): Promise<IUser | undefined> {
+        return this.reader.getUserReader().getByUsername(agentUsername);
     }
 
 }

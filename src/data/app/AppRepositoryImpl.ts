@@ -11,13 +11,13 @@ export default class AppRepositoryImpl implements IAppRepository {
         private readonly remoteDataSource: IAppRemoteDataSource,
     ) { }
 
-    public async startFlow(agentId: string, visitorToken: string, flowId: string): Promise<IHttpResponse> {
-        const agent = await this.internalDataSource.getAgentById(agentId);
+    public async startFlow(agentUsername: string, visitorToken: string, flowId: string): Promise<IHttpResponse> {
+        const agent = await this.internalDataSource.getAgentByUsername(agentUsername);
 
         if (!agent) {
-            throw new AppError(`Could not find agent:  ${agentId}`, HttpStatusCode.BAD_REQUEST);
+            throw new AppError(`Could not find agent:  ${agentUsername}`, HttpStatusCode.BAD_REQUEST);
         }
 
-        return await this.remoteDataSource.startFlow(agentId, visitorToken, flowId);
+        return await this.remoteDataSource.startFlow(agentUsername, visitorToken, flowId);
     }
 }

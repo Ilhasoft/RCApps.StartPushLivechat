@@ -14,7 +14,7 @@ export class StartFlowEndpoint extends ApiEndpoint {
     public path = 'start-flow';
 
     private bodyConstraints = {
-        agentId: {
+        agentUsername: {
             presence: {
                 allowEmpty: false,
             },
@@ -39,7 +39,7 @@ export class StartFlowEndpoint extends ApiEndpoint {
 
         await RequestBodyValidator.validate(this.bodyConstraints, request.query);
 
-        const agentId = request.query.agentId;
+        const agentUsername = request.query.agentUsername;
         const visitorToken = request.query.visitorToken;
         const flowId = await read.getEnvironmentReader().getSettings().getValueById(CONFIG_FLOW_ID);
 
@@ -51,7 +51,7 @@ export class StartFlowEndpoint extends ApiEndpoint {
         );
 
         try {
-            const res = await appRepo.startFlow(agentId, visitorToken, flowId);
+            const res = await appRepo.startFlow(agentUsername, visitorToken, flowId);
             return this.json({status: res.statusCode, content: {flowResponse: res.content}});
         } catch (e) {
             this.app.getLogger().error(e);
