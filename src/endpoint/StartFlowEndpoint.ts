@@ -20,7 +20,7 @@ export class StartFlowEndpoint extends ApiEndpoint {
             },
             type: 'string',
         },
-        visitorToken: {
+        contactUuid: {
             presence: {
                 allowEmpty: false,
             },
@@ -40,7 +40,7 @@ export class StartFlowEndpoint extends ApiEndpoint {
         await RequestBodyValidator.validate(this.bodyConstraints, request.query);
 
         const agentUsername = request.query.agentUsername;
-        const visitorToken = request.query.visitorToken;
+        const contactUuid = request.query.contactUuid;
         const flowId = await read.getEnvironmentReader().getSettings().getValueById(CONFIG_FLOW_ID);
 
         const rapidproUrl = await read.getEnvironmentReader().getSettings().getValueById(CONFIG_RAPIDPRO_URL);
@@ -51,7 +51,7 @@ export class StartFlowEndpoint extends ApiEndpoint {
         );
 
         try {
-            const res = await appRepo.startFlow(agentUsername, visitorToken, flowId);
+            const res = await appRepo.startFlowRemote(agentUsername, contactUuid, flowId);
             return this.json({status: res.statusCode, content: {flowResponse: res.content}});
         } catch (e) {
             this.app.getLogger().error(e);

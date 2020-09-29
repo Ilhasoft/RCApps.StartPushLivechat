@@ -10,12 +10,26 @@ export default class AppRemoteDataSource implements IAppRemoteDataSource {
         private readonly rapidproSecret: string,
     ) {}
 
-    public async startFlow(agentId: string, visitorToken: string, flowId: string): Promise<IHttpResponse> {
+    public async startFlowRemote(agentId: string, contactUuid: string, flowId: string): Promise<IHttpResponse> {
 
         const reqOptions = this.requestOptions();
         reqOptions['data'] = {
             flow: flowId,
-            contacts: [visitorToken],
+            contacts: [contactUuid],
+            extra: {
+                agentId,
+            },
+        };
+
+        return await this.http.post(`${this.rapidproUrl}/api/v2/flow_starts.json`, reqOptions);
+    }
+
+    public async startFlowCommand(agentId: string, contactUrn: string, flowId: string): Promise<IHttpResponse> {
+
+        const reqOptions = this.requestOptions();
+        reqOptions['data'] = {
+            flow: flowId,
+            urns: [contactUrn],
             extra: {
                 agentId,
             },
