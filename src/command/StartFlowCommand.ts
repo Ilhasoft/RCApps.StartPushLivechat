@@ -64,7 +64,7 @@ export class StartFlowCommand implements ISlashCommand {
                 return await this.onInvalidUsage(context, modify);
             }
             this.app.getLogger().error(error);
-            const errorMessage = ':x: Um erro ocorreu';
+            const errorMessage = ':x: ' + error.message;
 
             return await this.sendNotifyMessage(context, modify, errorMessage);
         }
@@ -99,6 +99,9 @@ export class StartFlowCommand implements ISlashCommand {
             new AppInternalDataSource(read),
             new AppRemoteDataSource(http, rapidproUrl, secret),
         );
+
+        // validate contact, if invalid throws error
+        await appRepo.validateContact(contactUrn);
 
         const res = await appRepo.startFlowCommand(context.getSender().username, contactUrn, flowId);
         if (res.statusCode === HttpStatusCode.CREATED) {

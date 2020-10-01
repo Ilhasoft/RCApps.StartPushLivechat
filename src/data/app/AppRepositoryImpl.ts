@@ -1,5 +1,6 @@
 import { HttpStatusCode, IHttp, IHttpResponse } from '@rocket.chat/apps-engine/definition/accessors';
 import AppError from '../../domain/AppError';
+import CommandError from '../../domain/CommandError';
 import IAppInternalDataSource from '../internal/IAppInternalDataSource';
 import IAppRemoteDataSource from '../remote/IAppRemoteDataSource';
 import IAppRepository from './IAppRepository';
@@ -15,7 +16,7 @@ export default class AppRepositoryImpl implements IAppRepository {
         const agent = await this.internalDataSource.getAgentByUsername(agentUsername);
 
         if (!agent) {
-            throw new AppError(`Could not find agent:  ${agentUsername}`, HttpStatusCode.BAD_REQUEST);
+            throw new AppError(`Could not find agent: ${agentUsername}`, HttpStatusCode.BAD_REQUEST);
         }
 
         return await this.remoteDataSource.startFlowRemote(agent.id, contactUuid, flowId);
@@ -25,9 +26,27 @@ export default class AppRepositoryImpl implements IAppRepository {
         const agent = await this.internalDataSource.getAgentByUsername(agentUsername);
 
         if (!agent) {
-            throw new AppError(`Could not find agent:  ${agentUsername}`, HttpStatusCode.BAD_REQUEST);
+            throw new AppError(`Could not find agent: ${agentUsername}`, HttpStatusCode.BAD_REQUEST);
         }
 
         return await this.remoteDataSource.startFlowCommand(agent.id, contactUrn, flowId);
     }
+
+    public async validateContact(contactUrn: string): Promise<boolean> {
+        const res = await this.remoteDataSource.validateContact(contactUrn);
+
+        if (!res) {
+            throw new CommandError(`Connection error, could not validate contact: ${contactUrn}`);
+        }
+
+        console.log(res);
+
+        if (res.data.results.length === 0) {
+            throw new CommandError(`Could not find contact: ${contactUrn}`);
+        }
+
+        return true;
+
+    }
+
 }

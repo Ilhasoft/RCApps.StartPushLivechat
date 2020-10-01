@@ -38,6 +38,13 @@ export default class AppRemoteDataSource implements IAppRemoteDataSource {
         return await this.http.post(`${this.rapidproUrl}/api/v2/flow_starts.json`, reqOptions);
     }
 
+    public async validateContact(contactUrn: string): Promise<IHttpResponse> {
+
+        const reqOptions = this.requestOptions();
+
+        return await this.http.get(`${this.rapidproUrl}/api/v2/contacts.json?urn=${contactUrn}`, reqOptions);
+    }
+
     private requestOptions(): object {
         return {
             headers: {

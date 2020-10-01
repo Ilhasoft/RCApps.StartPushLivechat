@@ -6,4 +6,6 @@ export default interface IAppRemoteDataSource {
 
     startFlowCommand(agentId: string, contactUrn: string, flowId: string): Promise<IHttpResponse>;
 
+    validateContact(contactUrn: string): Promise<IHttpResponse>;
+
 }
