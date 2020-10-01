@@ -10,6 +10,8 @@ import AppInternalDataSource from '../local/internal/AppInternalDataSource';
 import AppRemoteDataSource from '../remote/app/AppRemoteDataSource';
 import { CONFIG_FLOW_ID, CONFIG_RAPIDPRO_AUTH_TOKEN, CONFIG_RAPIDPRO_URL } from '../settings/Constants';
 
+const PHONE_PATTERN = '^[\+][(]?[0-9]{2}[)]?[-\s\.]?[0-9]{2}[-\s\.]?[0-9]{9}$';
+
 export class StartFlowCommand implements ISlashCommand {
 
     private static readonly ERR_INVALID_COMMAND = 'Formato do comando é inválido.';
@@ -17,7 +19,7 @@ export class StartFlowCommand implements ISlashCommand {
     private static readonly TXT_USAGE_INFO = 'StartPushLivechat é um aplicativo para o Rocket.Chat para iniciar um fluxo para um agente ' +
         'e contato específico.\nOperações disponíveis:\n\n' +
         'Para ver esta ajuda:         `/iniciar-conversa ajuda`\n' +
-        'Para iniciar um fluxo para um contato: `/iniciar-conversa <canal> urn_do_contato           (e.g. /iniciar-conversa whatsapp +5555555555555)`\n';
+        'Para iniciar um fluxo para um contato: `/iniciar-conversa <canal> urn_do_contato           (e.g. /iniciar-conversa whatsapp +(55)8295555-5555)`\n';
 
     public command: string;
     public i18nParamsExample: string;
@@ -31,18 +33,13 @@ export class StartFlowCommand implements ISlashCommand {
         this.providesPreview = false;
     }
 
-    public async executor(
-        context: SlashCommandContext,
-        read: IRead,
-        modify: IModify,
-        http: IHttp,
-        persis: IPersistence,
-    ): Promise<void> {
+    public async executor(context: SlashCommandContext, read: IRead, modify: IModify, http: IHttp, persis: IPersistence): Promise<void> {
         if (context.getArguments().length === 0) {
             return await this.onInvalidUsage(context, modify);
         }
         const operation = context.getArguments()[0];
         let contactUrn: string;
+        let rawUrn: string | undefined;
 
         try {
             switch (operation) {
@@ -50,20 +47,22 @@ export class StartFlowCommand implements ISlashCommand {
                     return this.sendNotifyMessage(context, modify, StartFlowCommand.TXT_USAGE_INFO);
                 case 'whatsapp':
                     await this.onRunningCommand(context, modify);
-                    contactUrn = 'whatsapp:' + this.getContactUrnFromArgs(context.getArguments());
+                    rawUrn = this.getContactUrnFromArgs(context.getArguments(), operation);
+                    contactUrn = `${operation}:${rawUrn}`;
                     return await this.startFlow(context, read, modify, http, contactUrn);
                 case 'telegram':
                     await this.onRunningCommand(context, modify);
-                    contactUrn = 'telegram:' + this.getContactUrnFromArgs(context.getArguments());
+                    rawUrn = this.getContactUrnFromArgs(context.getArguments(), operation);
+                    contactUrn = `${operation}:${rawUrn}`;
                     return await this.startFlow(context, read, modify, http, contactUrn);
                 default:
                     return await this.onInvalidUsage(context, modify);
             }
         } catch (error) {
-            if (error instanceof CommandError) {
-                return await this.onInvalidUsage(context, modify);
-            }
             this.app.getLogger().error(error);
+            if (error instanceof CommandError) {
+                return await this.onInvalidUsage(context, modify, error.message);
+            }
             const errorMessage = ':x: ' + error.message;
 
             return await this.sendNotifyMessage(context, modify, errorMessage);
@@ -73,7 +72,7 @@ export class StartFlowCommand implements ISlashCommand {
     private async startFlow(context: SlashCommandContext, read: IRead, modify: IModify, http: IHttp, contactUrn: string) {
         // only accept command when it's used on the bot direct message
         if (context.getRoom().type !== RoomType.DIRECT_MESSAGE) {
-            return await this.sendNotifyMessage(context, modify, ':exclamation: Este comando só está disponível quando utilizado com o usuário Bot do Aplicativo.');
+            throw new CommandError('Este comando só está disponível quando utilizado com o usuário Bot do Aplicativo.');
         }
 
         const usersIds = context.getRoom().userIds;
@@ -85,11 +84,11 @@ export class StartFlowCommand implements ISlashCommand {
         const appUser = await read.getUserReader().getAppUser(this.app.getID());
         // only accept command when it's used on the bot direct message
         if (appUser!.id !== recipientUserId) {
-            return await this.sendNotifyMessage(context, modify, ':exclamation: Este comando só está disponível quando utilizado com o usuário Bot do Aplicativo.');
+            throw new CommandError('Este comando só está disponível quando utilizado com o usuário Bot do Aplicativo.');
         }
         // only accept commands from livechat agents
         if (!context.getSender().roles.includes('livechat-agent')) {
-            return await this.sendNotifyMessage(context, modify, ':exclamation: Este comando só está disponível para agentes livechat.');
+            throw new CommandError('Este comando só está disponível para agentes livechat.');
         }
 
         const flowId = await read.getEnvironmentReader().getSettings().getValueById(CONFIG_FLOW_ID);
@@ -106,18 +105,34 @@ export class StartFlowCommand implements ISlashCommand {
         const res = await appRepo.startFlowCommand(context.getSender().username, contactUrn, flowId);
         if (res.statusCode === HttpStatusCode.CREATED) {
             return await this.sendNotifyMessage(context, modify, ':white_check_mark: O Fluxo foi iniciado com sucesso');
-        } else { // the response from push can be 201, but flow room creation can still fail at the middle of a flow
-            throw new AppError(`Não foi possível iniciar o fluxo para o contato: ${contactUrn}`, res.statusCode);
+        } else {
+            throw new CommandError(`Não foi possível iniciar o fluxo para o contato: ${contactUrn}`);
         }
 
     }
 
-    private getContactUrnFromArgs(args: Array<string>): string {
+    private getContactUrnFromArgs(args: Array<string>, type: string): string {
         if (args.length !== 2) {
             throw new CommandError(StartFlowCommand.ERR_INVALID_COMMAND);
         }
 
-        return args[1];
+        const urn = args[1];
+        let trimmed: string;
+
+        switch (type) {
+            case 'whatsapp':
+                trimmed = urn.replace(/[- )(]/g, '');
+                if (trimmed.match(PHONE_PATTERN)) {
+                    return trimmed;
+                } else {
+                    throw new CommandError('Número do WhatsApp possui formato inválido. Digite "/iniciar-conversa ajuda" para instruções');
+                }
+            case 'telegram':
+                return urn;
+            default:
+                throw new CommandError('Canal desconhecido. Digite "/iniciar-conversa ajuda" para instruções');
+        }
+
     }
 
     private async sendNotifyMessage(context: SlashCommandContext, modify: IModify, text: string) {
@@ -136,8 +151,8 @@ export class StartFlowCommand implements ISlashCommand {
         await this.sendNotifyMessage(context, modify, `:desktop: /iniciar-conversa ${context.getArguments().join(' ')}`);
     }
 
-    private async onInvalidUsage(context: SlashCommandContext, modify: IModify) {
-        await this.sendNotifyMessage(context, modify, StartFlowCommand.TXT_INVALID_COMMAND);
+    private async onInvalidUsage(context: SlashCommandContext, modify: IModify, text?: string) {
+        await this.sendNotifyMessage(context, modify, text ? `:x: ${text}` : StartFlowCommand.TXT_INVALID_COMMAND);
     }
 
 }
