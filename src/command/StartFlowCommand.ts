@@ -10,7 +10,7 @@ import AppInternalDataSource from '../local/internal/AppInternalDataSource';
 import AppRemoteDataSource from '../remote/app/AppRemoteDataSource';
 import { CONFIG_FLOW_ID, CONFIG_RAPIDPRO_AUTH_TOKEN, CONFIG_RAPIDPRO_URL } from '../settings/Constants';
 
-const PHONE_PATTERN = '^[\+][(]?[0-9]{2}[)]?[-\s\.]?[0-9]{2}[-\s\.]?[0-9]{9}$';
+const PHONE_PATTERN = '^[\+]?[(]?[0-9]{2}[)]?[-\s\.]?[0-9]{2}[-\s\.]?[0-9]{9}$';
 
 export class StartFlowCommand implements ISlashCommand {
 
@@ -121,7 +121,7 @@ export class StartFlowCommand implements ISlashCommand {
 
         switch (type) {
             case 'whatsapp':
-                trimmed = urn.replace(/[- )(]/g, '');
+                trimmed = urn.replace(/[- )(+]/g, '');
                 if (trimmed.match(PHONE_PATTERN)) {
                     return trimmed;
                 } else {
