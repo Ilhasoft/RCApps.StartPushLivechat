@@ -4,13 +4,15 @@ import { ISlashCommand, SlashCommandContext } from '@rocket.chat/apps-engine/def
 
 import { StartPushLivechatApp } from '../../StartPushLivechatApp';
 import AppRepositoryImpl from '../data/app/AppRepositoryImpl';
+import IAppRepository from '../data/app/IAppRepository';
 import AppError from '../domain/AppError';
 import CommandError from '../domain/CommandError';
+import { validate } from '../lib/validatejs/0_13_1/validate';
 import AppInternalDataSource from '../local/internal/AppInternalDataSource';
 import AppRemoteDataSource from '../remote/app/AppRemoteDataSource';
 import { CONFIG_FLOW_ID, CONFIG_RAPIDPRO_AUTH_TOKEN, CONFIG_RAPIDPRO_URL } from '../settings/Constants';
 
-const PHONE_PATTERN = '^[\+]?[(]?[0-9]{2}[)]?[-\s\.]?[0-9]{2}[-\s\.]?[0-9]{9}$';
+const WAID_PATTERN = '^55[0-9]{2}9?[0-9]{8}$';
 
 export class StartFlowCommand implements ISlashCommand {
 
@@ -19,7 +21,7 @@ export class StartFlowCommand implements ISlashCommand {
     private static readonly TXT_USAGE_INFO = 'StartPushLivechat é um aplicativo para o Rocket.Chat para iniciar um fluxo para um agente ' +
         'e contato específico.\nOperações disponíveis:\n\n' +
         'Para ver esta ajuda:         `/iniciar-conversa ajuda`\n' +
-        'Para iniciar um fluxo para um contato: `/iniciar-conversa <canal> urn_do_contato           (e.g. /iniciar-conversa whatsapp +(55)8295555-5555)`\n';
+        'Para iniciar um fluxo para um contato: `/iniciar-conversa <canal> urn_do_contato           (e.g. /iniciar-conversa whatsapp +55(82)95555-5555)`\n';
 
     public command: string;
     public i18nParamsExample: string;
@@ -99,8 +101,11 @@ export class StartFlowCommand implements ISlashCommand {
             new AppRemoteDataSource(http, rapidproUrl, secret),
         );
 
-        // validate contact, if invalid throws error
-        await appRepo.validateContact(contactUrn);
+        const [isValidUrn, validUrn] =  await this.validateURN(appRepo, contactUrn);
+        if (!isValidUrn) {
+            throw new CommandError(`Não foi possível encontrar o contato: ${contactUrn}`);
+        }
+        contactUrn = validUrn;
 
         const res = await appRepo.startFlowCommand(context.getSender().username, contactUrn, flowId);
         if (res.statusCode === HttpStatusCode.CREATED) {
@@ -109,6 +114,38 @@ export class StartFlowCommand implements ISlashCommand {
             throw new CommandError(`Não foi possível iniciar o fluxo para o contato: ${contactUrn}`);
         }
 
+    }
+
+    private async validateURN(appRepo: IAppRepository, urn: string): Promise<[boolean, string]> {
+        const [scheme, specific] = urn.split(':');
+
+        if (scheme === 'whatsapp') {
+            return await this.validateWhatsAppURN(appRepo, urn);
+        }
+
+        return [true, urn];
+    }
+
+    private async validateWhatsAppURN(appRepo: IAppRepository, urn: string): Promise<[boolean, string]> {
+
+        let isValid = await appRepo.validateContact(urn);
+        if (isValid) {
+            return [true, urn];
+        }
+
+        // segunda tentativa
+        const [scheme, specific] = urn.split(':');
+        const countryCodeAndDDD = specific.substring(0, 4);
+        const contactNumber = specific.substring(4);
+        if (contactNumber.length === 9) {
+            urn = `${scheme}:${countryCodeAndDDD}${contactNumber.substring(1)}`;
+        } else {
+            urn = `${scheme}:${countryCodeAndDDD}9${contactNumber}`;
+        }
+
+        isValid = await appRepo.validateContact(urn);
+
+        return [isValid, urn];
     }
 
     private getContactUrnFromArgs(args: Array<string>, type: string): string {
@@ -122,7 +159,11 @@ export class StartFlowCommand implements ISlashCommand {
         switch (type) {
             case 'whatsapp':
                 trimmed = urn.replace(/[- )(+]/g, '');
-                if (trimmed.match(PHONE_PATTERN)) {
+                // check if urn has country code, if not add the default brazilian +55
+                if (trimmed.length <= 11) { // maximum length with ddd and the newer 9
+                    trimmed = '55' + trimmed;
+                }
+                if (trimmed.match(WAID_PATTERN)) {
                     return trimmed;
                 } else {
                     throw new CommandError('Número do WhatsApp possui formato inválido. Digite "/iniciar-conversa ajuda" para instruções');

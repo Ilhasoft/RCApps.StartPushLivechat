@@ -35,14 +35,12 @@ export default class AppRepositoryImpl implements IAppRepository {
     public async validateContact(contactUrn: string): Promise<boolean> {
         const res = await this.remoteDataSource.validateContact(contactUrn);
 
-        if (!res) {
+        if (!res || res.statusCode !== 200) {
             throw new CommandError(`Connection error, could not validate contact: ${contactUrn}`);
         }
 
-        console.log(res);
-
         if (res.data.results.length === 0) {
-            throw new CommandError(`Could not find contact: ${contactUrn}`);
+            return false;
         }
 
         return true;
