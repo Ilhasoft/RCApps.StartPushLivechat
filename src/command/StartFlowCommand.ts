@@ -18,7 +18,7 @@ export class StartFlowCommand implements ISlashCommand {
 
     private static readonly ERR_INVALID_COMMAND = 'Formato do comando é inválido.';
     private static readonly TXT_INVALID_COMMAND = ':x: Formato do comando é inválido! Digite `/iniciar-conversa ajuda` para ver as instruções.';
-    private static readonly TXT_USAGE_INFO = 'StartPushLivechat é um aplicativo para o Rocket.Chat para iniciar um fluxo para um agente ' +
+    private static readonly TXT_USAGE_INFO = 'StartPushLivechat é um aplicativo para o Rocket.Chat com objetivo de iniciar um fluxo para um agente ' +
         'e contato específico.\nOperações disponíveis:\n\n' +
         'Para ver esta ajuda:         `/iniciar-conversa ajuda`\n' +
         'Para iniciar um fluxo para um contato: `/iniciar-conversa <canal> urn_do_contato           (e.g. /iniciar-conversa whatsapp +55(82)95555-5555)`\n';
