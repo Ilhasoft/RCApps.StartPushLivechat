@@ -1,0 +1,5 @@
+{
+    "config_flow_id": "Id do Fluxo",
+    "config_rapidpro_url": "URL do Push",
+    "config_rapidpro_auth_token": "Auth Token do Push"
+}
