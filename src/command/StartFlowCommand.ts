@@ -5,9 +5,7 @@ import { ISlashCommand, SlashCommandContext } from '@rocket.chat/apps-engine/def
 import { StartPushLivechatApp } from '../../StartPushLivechatApp';
 import AppRepositoryImpl from '../data/app/AppRepositoryImpl';
 import IAppRepository from '../data/app/IAppRepository';
-import AppError from '../domain/AppError';
 import CommandError from '../domain/CommandError';
-import { validate } from '../lib/validatejs/0_13_1/validate';
 import AppInternalDataSource from '../local/internal/AppInternalDataSource';
 import AppRemoteDataSource from '../remote/app/AppRemoteDataSource';
 import { CONFIG_FLOW_ID, CONFIG_RAPIDPRO_AUTH_TOKEN, CONFIG_RAPIDPRO_URL } from '../settings/Constants';
@@ -101,7 +99,7 @@ export class StartFlowCommand implements ISlashCommand {
             new AppRemoteDataSource(http, rapidproUrl, secret),
         );
 
-        const [isValidUrn, validUrn] =  await this.validateURN(appRepo, contactUrn);
+        const [isValidUrn, validUrn] = await this.validateURN(appRepo, contactUrn);
         if (!isValidUrn) {
             throw new CommandError(`Não foi possível encontrar o contato: ${contactUrn}`);
         }

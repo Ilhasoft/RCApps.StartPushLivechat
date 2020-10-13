@@ -1,4 +1,5 @@
-import { HttpStatusCode, IHttp, IHttpResponse } from '@rocket.chat/apps-engine/definition/accessors';
+import { HttpStatusCode, IHttpResponse } from '@rocket.chat/apps-engine/definition/accessors';
+
 import AppError from '../../domain/AppError';
 import CommandError from '../../domain/CommandError';
 import IAppInternalDataSource from '../internal/IAppInternalDataSource';
@@ -12,14 +13,14 @@ export default class AppRepositoryImpl implements IAppRepository {
         private readonly remoteDataSource: IAppRemoteDataSource,
     ) { }
 
-    public async startFlowRemote(agentUsername: string, contactUuid: string, flowId: string): Promise<IHttpResponse> {
-        const agent = await this.internalDataSource.getAgentByUsername(agentUsername);
+    public async startFlowRemote(agentId: string, contactUuid: string, flowId: string): Promise<IHttpResponse> {
+        const agent = await this.internalDataSource.getAgentById(agentId);
 
         if (!agent) {
-            throw new AppError(`Could not find agent: ${agentUsername}`, HttpStatusCode.BAD_REQUEST);
+            throw new AppError(`Could not find agent: ${agentId}`, HttpStatusCode.BAD_REQUEST);
         }
 
-        return await this.remoteDataSource.startFlowRemote(agent.id, contactUuid, flowId);
+        return await this.remoteDataSource.startFlowRemote(agentId, contactUuid, flowId);
     }
 
     public async startFlowCommand(agentUsername: string, contactUrn: string, flowId: string): Promise<IHttpResponse> {
