@@ -2,6 +2,7 @@ import { HttpStatusCode, IHttpResponse } from '@rocket.chat/apps-engine/definiti
 
 import AppError from '../../domain/AppError';
 import CommandError from '../../domain/CommandError';
+import IContact from '../../domain/Contact';
 import IAppInternalDataSource from '../internal/IAppInternalDataSource';
 import IAppRemoteDataSource from '../remote/IAppRemoteDataSource';
 import IAppRepository from './IAppRepository';
@@ -33,7 +34,7 @@ export default class AppRepositoryImpl implements IAppRepository {
         return await this.remoteDataSource.startFlowCommand(agent.id, contactUrn, flowId);
     }
 
-    public async validateContact(contactUrn: string): Promise<boolean> {
+    public async getContact(contactUrn: string): Promise<IContact | undefined> {
         const res = await this.remoteDataSource.validateContact(contactUrn);
 
         if (!res || res.statusCode !== 200) {
@@ -41,10 +42,10 @@ export default class AppRepositoryImpl implements IAppRepository {
         }
 
         if (res.data.results.length === 0) {
-            return false;
+            return undefined;
         }
 
-        return true;
+        return res.data.results[0] as IContact;
 
     }
 
