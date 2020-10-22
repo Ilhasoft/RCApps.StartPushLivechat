@@ -1,16 +1,21 @@
 export default class CookieExtractor {
 
-    constructor(private readonly cookiesString: string) { }
+    private cookies: {[key: string]: string};
+
+    constructor(cookiesString: string) {
+        const cookiesSplit = cookiesString.split('; ');
+        this.cookies = {};
+        for (const cookie of cookiesSplit) {
+            const current = cookie.split('=');
+            if (current.length !== 2) {
+                throw new Error('Could not split cookie string, due to invalid format');
+            }
+            this.cookies[current[0]] = current[1];
+        }
+    }
 
     public getCookie(name: string) {
-        const cookies = this.cookiesString.split('; ');
-        const result = {};
-        for (const cookie of cookies) {
-            const current = cookie.split('=');
-            result[current[0]] = current[1];
-        }
-
-        return result[name];
+        return this.cookies[name];
     }
 
 }
