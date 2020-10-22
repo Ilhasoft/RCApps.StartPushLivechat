@@ -7,8 +7,8 @@ import {
 import { ApiSecurity, ApiVisibility, IApi } from '@rocket.chat/apps-engine/definition/api';
 import { App } from '@rocket.chat/apps-engine/definition/App';
 import { IAppInfo } from '@rocket.chat/apps-engine/definition/metadata';
-import { StartFlowCommand } from './src/command/StartFlowCommand';
 
+import { StartFlowCommand } from './src/command/StartFlowCommand';
 import { StartFlowEndpoint } from './src/endpoint/StartFlowEndpoint';
 import { APP_SETTINGS } from './src/settings/Constants';
 

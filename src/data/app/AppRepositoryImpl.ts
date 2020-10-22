@@ -1,6 +1,8 @@
-import { HttpStatusCode, IHttp, IHttpResponse } from '@rocket.chat/apps-engine/definition/accessors';
+import { HttpStatusCode, IHttpResponse } from '@rocket.chat/apps-engine/definition/accessors';
+
 import AppError from '../../domain/AppError';
 import CommandError from '../../domain/CommandError';
+import IContact from '../../domain/Contact';
 import IAppInternalDataSource from '../internal/IAppInternalDataSource';
 import IAppRemoteDataSource from '../remote/IAppRemoteDataSource';
 import IAppRepository from './IAppRepository';
@@ -12,14 +14,14 @@ export default class AppRepositoryImpl implements IAppRepository {
         private readonly remoteDataSource: IAppRemoteDataSource,
     ) { }
 
-    public async startFlowRemote(agentUsername: string, contactUuid: string, flowId: string): Promise<IHttpResponse> {
-        const agent = await this.internalDataSource.getAgentByUsername(agentUsername);
+    public async startFlowRemote(agentId: string, contactUuid: string, flowId: string): Promise<IHttpResponse> {
+        const agent = await this.internalDataSource.getAgentById(agentId);
 
         if (!agent) {
-            throw new AppError(`Could not find agent: ${agentUsername}`, HttpStatusCode.BAD_REQUEST);
+            throw new AppError(`Could not find agent: ${agentId}`, HttpStatusCode.BAD_REQUEST);
         }
 
-        return await this.remoteDataSource.startFlowRemote(agent.id, contactUuid, flowId);
+        return await this.remoteDataSource.startFlowRemote(agentId, contactUuid, flowId);
     }
 
     public async startFlowCommand(agentUsername: string, contactUrn: string, flowId: string): Promise<IHttpResponse> {
@@ -32,7 +34,7 @@ export default class AppRepositoryImpl implements IAppRepository {
         return await this.remoteDataSource.startFlowCommand(agent.id, contactUrn, flowId);
     }
 
-    public async validateContact(contactUrn: string): Promise<boolean> {
+    public async getContact(contactUrn: string): Promise<IContact | undefined> {
         const res = await this.remoteDataSource.validateContact(contactUrn);
 
         if (!res || res.statusCode !== 200) {
@@ -40,10 +42,10 @@ export default class AppRepositoryImpl implements IAppRepository {
         }
 
         if (res.data.results.length === 0) {
-            return false;
+            return undefined;
         }
 
-        return true;
+        return res.data.results[0] as IContact;
 
     }
 
