@@ -33,16 +33,18 @@ Refer to this [guide](https://docs.rocket.chat/apps-development/getting-started)
 
 ## Command Reference
 
-### /iniciar-conversa {channel} {urn}
+### /iniciar-conversa \{type} \{identifier}
 
 - **Description**:
     - Start the configured flow on the App's settings for the specified contact and agent that called the command.
 
-- **Supported Channels**:
+- **Supported types**:
     - Whatsapp: `whatsapp`
+        - The identifier will be the <u>whatsapp number</u>
     - Telegram: `telegram`
+        - The identifer will be the <u>telegram id</u>
 
--**Examples**:
+- **Examples**:
     - `/iniciar-conversa whatsapp 558299999999`
     - `/iniciar-conversa telegram 123456789`
 
