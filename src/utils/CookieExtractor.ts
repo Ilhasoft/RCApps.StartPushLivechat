@@ -7,10 +7,9 @@ export default class CookieExtractor {
         this.cookies = {};
         for (const cookie of cookiesSplit) {
             const current = cookie.split('=');
-            if (current.length !== 2) {
-                throw new Error('Could not split cookie string, due to invalid format');
+            if (current.length === 2) {
+                this.cookies[current[0]] = current[1];
             }
-            this.cookies[current[0]] = current[1];
         }
     }
 
