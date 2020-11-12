@@ -9,13 +9,14 @@ import AppRemoteDataSource from '../remote/app/AppRemoteDataSource';
 import { CONFIG_FLOW_ID, CONFIG_RAPIDPRO_AUTH_TOKEN, CONFIG_RAPIDPRO_URL, COOKIE_RC_USER_ID, RC_SERVER_URL } from '../settings/Constants';
 import CookieExtractor from '../utils/CookieExtractor';
 import RequestBodyValidator from '../utils/RequestBodyValidator';
+import URNValidator from '../utils/URNValidator';
 
 export class StartFlowEndpoint extends ApiEndpoint {
 
     public path = 'start-flow';
 
     private bodyConstraints = {
-        contactUuid: {
+        contactUrn: {
             presence: {
                 allowEmpty: false,
             },
@@ -34,7 +35,7 @@ export class StartFlowEndpoint extends ApiEndpoint {
 
         await RequestBodyValidator.validate(this.bodyConstraints, request.query);
 
-        const contactUuid = request.query.contactUuid;
+        const contactUrn = request.query.contactUrn;
         const flowId = await read.getEnvironmentReader().getSettings().getValueById(CONFIG_FLOW_ID);
 
         const rapidproUrl = await read.getEnvironmentReader().getSettings().getValueById(CONFIG_RAPIDPRO_URL);
@@ -50,7 +51,15 @@ export class StartFlowEndpoint extends ApiEndpoint {
             }
             const cookiesExtractor = new CookieExtractor(request.headers.cookie);
             const agentId = cookiesExtractor.getCookie(COOKIE_RC_USER_ID);
-            await appRepo.startFlowRemote(agentId, contactUuid, flowId);
+
+            const UrnValidator = new URNValidator();
+
+            const [isValidUrn, validUrn, contactName] = await UrnValidator.validateURN(appRepo, contactUrn);
+            if (!isValidUrn) {
+                throw new AppError(`Invalid URN: ${contactUrn}`, HttpStatusCode.BAD_REQUEST);
+            }
+
+            await appRepo.startFlow(agentId, validUrn, flowId);
             const serverUrl = await read.getEnvironmentReader().getServerSettings().getValueById(RC_SERVER_URL);
             return this.json({ status: HttpStatusCode.TEMPORARY_REDIRECT, headers: { Location: serverUrl } });
         } catch (e) {

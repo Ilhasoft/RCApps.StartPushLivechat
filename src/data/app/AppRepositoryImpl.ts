@@ -14,31 +14,21 @@ export default class AppRepositoryImpl implements IAppRepository {
         private readonly remoteDataSource: IAppRemoteDataSource,
     ) { }
 
-    public async startFlowRemote(agentId: string, contactUuid: string, flowId: string): Promise<IHttpResponse> {
+    public async startFlow(agentId: string, contactUrn: string, flowId: string): Promise<IHttpResponse> {
         const agent = await this.internalDataSource.getAgentById(agentId);
 
         if (!agent) {
             throw new AppError(`Could not find agent: ${agentId}`, HttpStatusCode.BAD_REQUEST);
         }
 
-        return await this.remoteDataSource.startFlowRemote(agentId, contactUuid, flowId);
-    }
-
-    public async startFlowCommand(agentUsername: string, contactUrn: string, flowId: string): Promise<IHttpResponse> {
-        const agent = await this.internalDataSource.getAgentByUsername(agentUsername);
-
-        if (!agent) {
-            throw new AppError(`Could not find agent: ${agentUsername}`, HttpStatusCode.BAD_REQUEST);
-        }
-
-        return await this.remoteDataSource.startFlowCommand(agent.id, contactUrn, flowId);
+        return await this.remoteDataSource.startFlow(agentId, contactUrn, flowId);
     }
 
     public async getContact(contactUrn: string): Promise<IContact | undefined> {
         const res = await this.remoteDataSource.validateContact(contactUrn);
 
         if (!res || res.statusCode !== 200) {
-            throw new CommandError(`Connection error, could not validate contact: ${contactUrn}`);
+            throw new CommandError(`Connection error, could not validate contact: ${contactUrn}, Status: ${res.statusCode}`);
         }
 
         if (res.data.results.length === 0) {
