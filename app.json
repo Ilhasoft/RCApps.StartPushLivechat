@@ -1,6 +1,6 @@
 {
     "id": "3717b901-4afe-4a71-9f27-294851c728e0",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "requiredApiVersion": "^1.4.0",
     "iconFile": "icon.png",
     "author": {
@@ -11,5 +11,6 @@
     "name": "StartPushLivechat",
     "nameSlug": "startpushlivechat",
     "classFile": "StartPushLivechatApp.ts",
-    "description": "App to start a push flow for a livechat room"
+    "description": "App to start a Push flow for a livechat room",
+    "implements": []
 }
