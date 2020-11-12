@@ -9,6 +9,7 @@ import CommandError from '../domain/CommandError';
 import AppInternalDataSource from '../local/internal/AppInternalDataSource';
 import AppRemoteDataSource from '../remote/app/AppRemoteDataSource';
 import { CONFIG_FLOW_ID, CONFIG_RAPIDPRO_AUTH_TOKEN, CONFIG_RAPIDPRO_URL } from '../settings/Constants';
+import URNValidator from '../utils/URNValidator';
 
 const WAID_PATTERN = '^55[0-9]{2}9?[0-9]{8}$';
 
@@ -99,59 +100,20 @@ export class StartFlowCommand implements ISlashCommand {
             new AppRemoteDataSource(http, rapidproUrl, secret),
         );
 
-        const [isValidUrn, validUrn, contactName] = await this.validateURN(appRepo, contactUrn);
+        const UrnValidator = new URNValidator();
+
+        const [isValidUrn, validUrn, contactName] = await UrnValidator.validateURN(appRepo, contactUrn);
         if (!isValidUrn) {
             throw new CommandError(`Não foi possível encontrar o contato: ${contactUrn}`);
         }
 
-        const res = await appRepo.startFlowCommand(context.getSender().username, validUrn, flowId);
+        const res = await appRepo.startFlow(context.getSender().id, validUrn, flowId);
         if (res.statusCode === HttpStatusCode.CREATED) {
             return await this.sendNotifyMessage(context, modify, `:white_check_mark: O Fluxo foi iniciado com sucesso para o contato *${contactName}*.`);
         } else {
             throw new CommandError(`Não foi possível iniciar o fluxo para o contato: ${validUrn}`);
         }
 
-    }
-
-    private async validateURN(appRepo: IAppRepository, urn: string): Promise<[boolean, string, string | undefined]> {
-        const [scheme, specific] = urn.split(':');
-
-        // by now, only whatsapp has a unique urn validation
-        if (scheme === 'whatsapp') {
-            return await this.validateWhatsAppURN(appRepo, urn);
-        }
-
-        const contact = await appRepo.getContact(urn);
-        const contactName = contact ? contact.name : undefined;
-        return [true, urn, contactName];
-
-    }
-
-    private async validateWhatsAppURN(appRepo: IAppRepository, urn: string): Promise<[boolean, string, string | undefined]> {
-
-        let contact = await appRepo.getContact(urn);
-        let isValid = contact ? true : false;
-        let contactName = contact ? contact.name : undefined;
-        if (isValid) {
-            return [true, urn, contactName];
-        }
-
-        // segunda tentativa
-        const [scheme, specific] = urn.split(':');
-        const countryCodeAndDDD = specific.substring(0, 4);
-        const contactNumber = specific.substring(4);
-        if (contactNumber.length === 9) {
-            urn = `${scheme}:${countryCodeAndDDD}${contactNumber.substring(1)}`;
-        } else {
-            urn = `${scheme}:${countryCodeAndDDD}9${contactNumber}`;
-        }
-
-        contact = await appRepo.getContact(urn);
-        isValid = contact ? true : false;
-
-        contactName = contact ? contact.name : undefined;
-
-        return [isValid, urn, contactName];
     }
 
     private getContactUrnFromArgs(args: Array<string>, type: string): string {
