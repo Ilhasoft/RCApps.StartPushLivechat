@@ -1,22 +1,74 @@
 # StartPushLivechat
-App to start a push flow for a livechat room
+App to start a [Push](https://push.al/) flow for a livechat room
 
-## Getting Started
-Now that you have generated a blank default Rocket.Chat App, what are you supposed to do next?
-Start developing! Open up your favorite editor, our recommended one is Visual Studio code,
-and start working on your App. Once you have something ready to test, you can either
-package it up and manually deploy it to your test instance or you can use the CLI to do so.
-Here are some commands to get started:
-- `rc-apps package`: this command will generate a packaged app file (zip) which can be installed **if** it compiles with TypeScript
-- `rc-apps deploy`: this will do what `package` does but will then ask you for your server url, username, and password to deploy it for you
+## Installation
 
-## Documentation
-Here are some links to examples and documentation:
-- [Rocket.Chat Apps TypeScript Definitions Documentation](https://rocketchat.github.io/Rocket.Chat.Apps-engine/)
-- [Rocket.Chat Apps TypeScript Definitions Repository](https://github.com/RocketChat/Rocket.Chat.Apps-engine)
-- [Example Rocket.Chat Apps](https://github.com/graywolf336/RocketChatApps)
-- Community Forums
-  - [App Requests](https://forums.rocket.chat/c/rocket-chat-apps/requests)
-  - [App Guides](https://forums.rocket.chat/c/rocket-chat-apps/guides)
-  - [Top View of Both Categories](https://forums.rocket.chat/c/rocket-chat-apps)
-- [#rocketchat-apps on Open.Rocket.Chat](https://open.rocket.chat/channel/rocketchat-apps)
+### Prerequisites
+
+- [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+- [Node](https://nodejs.org/en/download/)
+- [RC-Apps](https://docs.rocket.chat/apps-development/getting-started#rocket-chat-app-engine-cli)
+
+1. Clone the repository and change directory:
+
+```bash
+    git clone https://github.com/Ilhasoft/RCApps.StartPushLivechat.git
+    cd RCApps.StartPushLivechat
+```
+
+2. Install the required packages:
+
+```bash
+    npm install
+```
+
+3. Deploy the App to an specific Rocket.Chat instance:
+
+```bash
+    rc-apps deploy --url <your-rocket-url> --username <your-admin-username> --password <your-admin-password>
+```
+- If deploying to an specific Rocket.Chat instance, make sure to enable `Development Mode` on `Administration > General > Apps > Enable Development Mode`.
+
+Refer to this [guide](https://docs.rocket.chat/apps-development/getting-started) if you need more info.
+
+## Command Reference
+
+### /iniciar-conversa {channel} {urn}
+
+- **Description**:
+    - Start the configured flow on the App's settings for the specified contact and agent that called the command.
+
+- **Supported Channels**:
+    - Whatsapp: `whatsapp`
+    - Telegram: `telegram`
+
+-**Examples**:
+    - `/iniciar-conversa whatsapp 558299999999`
+    - `/iniciar-conversa telegram 123456789`
+
+## Enpoint Reference
+
+Error responses body returned in this pattern:
+
+```json
+{
+    "error": "error details message"
+}
+```
+
+### GET /start-flow
+
+- **Description**:
+    - Start the configured flow on the App's settings for the specified contact and agent then redirects to the Rocket.Chat application.
+- **Query Parameters**:
+    - `contactUrn`: The contact URN that is registered on Push.
+- **Success result**:
+    - Status: `307 Temporary-Redirect` 
+- **Error result**:
+    - Status: 
+        - `400 Bad-Request` 
+            - Missing cookies header
+            - Invalid agentId on cookies
+            - Invalid URN.
+        - `500 Internal-Server-Error`
+            - Unexpected Error occurs.
