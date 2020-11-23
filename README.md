@@ -33,10 +33,11 @@ Refer to this [guide](https://docs.rocket.chat/apps-development/getting-started)
 
 ## Command Reference
 
-### /iniciar-conversa \{type} \{identifier}
+### /iniciar-conversa \{type} \{identifier} {extra}
 
 - **Description**:
-    - Start the configured flow on the App's settings for the specified contact and agent that called the command.
+    - Start the configured flow on the App's settings for the specified contact and agent that called the command, sending the `extra` as a flow parameter.
+        - `extra` field must be a single word.
 
 - **Supported types**:
     - Whatsapp: `whatsapp`
@@ -46,7 +47,7 @@ Refer to this [guide](https://docs.rocket.chat/apps-development/getting-started)
 
 - **Examples**:
     - `/iniciar-conversa whatsapp 558299999999`
-    - `/iniciar-conversa telegram 123456789`
+    - `/iniciar-conversa telegram 123456789 test`
 
 ## Enpoint Reference
 
@@ -61,9 +62,10 @@ Error responses body returned in this pattern:
 ### GET /start-flow
 
 - **Description**:
-    - Start the configured flow on the App's settings for the specified contact and agent then redirects to the Rocket.Chat application.
+    - Start the configured flow on the App's settings for the specified contact sending the `extra` as a flow parameter, and agent then redirects to the Rocket.Chat application.
 - **Query Parameters**:
     - `contactUrn`: The contact URN that is registered on Push.
+    - `extra`: The extra data that will be sent as flow parameter on flow starts.
 - **Success result**:
     - Status: `307 Temporary-Redirect` 
 - **Error result**:
