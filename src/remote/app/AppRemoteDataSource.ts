@@ -10,7 +10,7 @@ export default class AppRemoteDataSource implements IAppRemoteDataSource {
         private readonly rapidproSecret: string,
     ) {}
 
-    public async startFlow(agentId: string, contactUrn: string, flowId: string): Promise<IHttpResponse> {
+    public async startFlow(agentId: string, contactUrn: string, flowId: string, extra: string | undefined): Promise<IHttpResponse> {
 
         const reqOptions = this.requestOptions();
         reqOptions['data'] = {
@@ -18,6 +18,7 @@ export default class AppRemoteDataSource implements IAppRemoteDataSource {
             urns: [contactUrn],
             extra: {
                 agentId,
+                extra,
             },
         };
 

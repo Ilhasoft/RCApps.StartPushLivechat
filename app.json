@@ -1,7 +1,7 @@
 {
     "id": "3717b901-4afe-4a71-9f27-294851c728e0",
     "version": "1.0.0",
-    "requiredApiVersion": "^1.4.0",
+    "requiredApiVersion": "^1.12.0",
     "iconFile": "icon.png",
     "author": {
         "name": "Ilhasoft",

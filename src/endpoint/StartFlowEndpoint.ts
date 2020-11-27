@@ -22,6 +22,10 @@ export class StartFlowEndpoint extends ApiEndpoint {
             },
             type: 'string',
         },
+        extra: {
+            presence: false,
+            type: 'string',
+        },
     };
 
     public async get(
@@ -36,6 +40,7 @@ export class StartFlowEndpoint extends ApiEndpoint {
         await RequestBodyValidator.validate(this.bodyConstraints, request.query);
 
         const contactUrn = request.query.contactUrn;
+        const extra = request.query.extra;
         const flowId = await read.getEnvironmentReader().getSettings().getValueById(CONFIG_FLOW_ID);
 
         const rapidproUrl = await read.getEnvironmentReader().getSettings().getValueById(CONFIG_RAPIDPRO_URL);
@@ -59,7 +64,7 @@ export class StartFlowEndpoint extends ApiEndpoint {
                 throw new AppError(`Invalid URN: ${contactUrn}`, HttpStatusCode.BAD_REQUEST);
             }
 
-            await appRepo.startFlow(agentId, validUrn, flowId);
+            await appRepo.startFlow(agentId, validUrn, flowId, extra);
             const serverUrl = await read.getEnvironmentReader().getServerSettings().getValueById(RC_SERVER_URL);
             return this.json({ status: HttpStatusCode.TEMPORARY_REDIRECT, headers: { Location: serverUrl } });
         } catch (e) {
